@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('zssn', '0002_rename_tickets_ticket_and_more'),
+        ('backend', '0002_rename_tickets_ticket_and_more'),
     ]
 
     operations = [
@@ -50,22 +50,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='relato',
             name='relatado',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='relatado', to='zssn.sobrevivente'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='relatado', to='backend.sobrevivente'),
         ),
         migrations.AddField(
             model_name='relato',
             name='relator',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='relator', to='zssn.sobrevivente'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='relator', to='backend.sobrevivente'),
         ),
         migrations.AddField(
             model_name='inventario',
             name='dono',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='zssn.sobrevivente'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='backend.sobrevivente'),
         ),
         migrations.AddField(
             model_name='inventario',
             name='item',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='zssn.itemcomercial'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='backend.itemcomercial'),
         ),
         migrations.AddConstraint(
             model_name='relato',
