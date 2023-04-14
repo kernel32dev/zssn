@@ -1,0 +1,17 @@
+* {
+    margin: 0;
+    padding: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+:root {
+    --title-height: 50px;
+    --drawer-closed: 50px;
+    --drawer-open: 200px;
+    --icon-size: 50px;
+
+    --anim-time: 0.25s;
+
+    --appbar-color: rgb(89, 200, 79);
+    --drawer-color: rgb(89, 200, 79);
+}
