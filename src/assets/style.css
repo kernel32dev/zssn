@@ -12,6 +12,16 @@
 
     --anim-time: 0.25s;
 
-    --appbar-color: rgb(89, 200, 79);
-    --drawer-color: rgb(89, 200, 79);
+    --theme-color: rgb(105, 240, 93);
+    --theme-color-button: rgb(84, 213, 72);
+    --theme-color-button-hover: rgb(128, 209, 121);
+    --theme-color-button-active: rgb(141, 225, 135);
+}
+body {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+body.desktop input:focus-visible {
+    outline: none;
 }
