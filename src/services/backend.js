@@ -19,14 +19,23 @@ export default {
     fetchSobrevivente() {
         return api.get(`sobrevivente/`)
     },
-    postPosicao(latitude, longitude) {
-        return api.post(`posicao/`, `{"latitude":${latitude},"longitude":${longitude}}`)
+    postPosicao(payload) {
+        return api.post(`posicao/`, payload)
     },
     postRelato(relatado) {
         return api.post(`relato/${relatado}/`)
     },
     deleteRelato(relatado) {
-        return api.post(`relato/${relatado}/`)
+        return api.delete(`relato/${relatado}/`)
+    },
+    postOferta(oferta) {
+        return api.post(`relato/`, oferta)
+    },
+    deleteOferta(oferta) {
+        return api.delete(`relato/${oferta}/`)
+    },
+    postCompra(oferta) {
+        return api.post(`compra/${oferta}/`)
     },
 
     // api publicas
@@ -38,5 +47,8 @@ export default {
     },
     fetchRelatos() {
         return api.get(`relatos/`)
+    },
+    fetchOfertas() {
+        return api.get(`ofertas/`)
     },
 }

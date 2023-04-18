@@ -12,22 +12,16 @@
                         Meu Perfil
                     </div>
                 </router-link>
-                <router-link :to="{ name: 'sobreviventes' }">
+                <router-link :to="{ name: 'comprar' }">
                     <div class="drawer-item">
-                        <div class="drawer-icon">&#xf0c0;</div>
-                        Sobreviventes
+                        <div class="drawer-icon">&#xf4c0;</div>
+                        Comprar
                     </div>
                 </router-link>
-                <router-link :to="{ name: 'inventario' }">
+                <router-link :to="{ name: 'vender' }">
                     <div class="drawer-item">
-                        <div class="drawer-icon">&#xf155;</div>
-                        Inventário
-                    </div>
-                </router-link>
-                <router-link :to="{ name: 'escambo' }">
-                    <div class="drawer-item">
-                        <div class="drawer-icon">&#xf24e;</div>
-                        Escambo
+                        <div class="drawer-icon">&#xf4c1;</div>
+                        Vender
                     </div>
                 </router-link>
                 <router-link :to="{ name: 'relatos' }">
@@ -36,11 +30,18 @@
                         Relatos
                     </div>
                 </router-link>
+                <router-link :to="{ name: 'relatorios' }">
+                    <div class="drawer-item">
+                        <div class="drawer-icon">&#xf15c;</div>
+                        Relatórios
+                    </div>
+                </router-link>
             </div>
         </div>
         <div id="router-root">
-            <div id="router-title">
+            <div id="router-header">
                 <div class="drawer-icon drawer-open-button" @click="open_drawer = true">&#xf0c9;</div>
+                <div id="router-title">{{ $route.meta.alias }}</div>
             </div>
             <router-view/>
         </div>
@@ -130,21 +131,29 @@ body.desktop #router-root {
 #drawer-space {
     width: var(--drawer-open);
 }
-#router-title {
+#router-header {
     position: fixed;
     top: 0px;
     height: var(--title-height);
     background-color: var(--theme-color);
     box-shadow: black 0px -10px 10px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: end;
     z-index: 2;
 }
-body.mobile #router-title {
+body.mobile #router-header {
     left: 0px;
     width: 100%;
 }
-body.desktop #router-title {
+body.desktop #router-header {
     left: var(--drawer-closed);
     width: calc(100% - var(--drawer-closed));
+}
+#router-title {
+    margin-bottom: 10px;
+    margin-left: 15px;
+    font-size: calc(var(--title-height) * 0.5);
 }
 #drawer-header {
     height: var(--icon-size);

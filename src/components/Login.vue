@@ -43,7 +43,7 @@
                                 <td>{{ item.item }}</td>
                                 <td class="pontos-td">{{ item.pontos }}</td>
                                 <td class="quant-td">
-                                    <button class="quant-button" @click="mutateQuant(item.id, -1)" :class="{disabled: !quants[item.id]}">-</button>
+                                    <button class="quant-button" @click="mutateQuant(item.id, -1)">-</button>
                                     <div class="quant-label">{{ quants[item.id] || 0 }}</div>
                                     <button class="quant-button" @click="mutateQuant(item.id, 1)">+</button>
                                 </td>
@@ -57,12 +57,12 @@
                 <p>&nbsp;</p>
             </div>
             <div class="buttons">
-                <div class="button" v-if="!register" :class="{disabled: loading}" @click="register = true">Registrar...</div>
-                <div class="button" v-if="register" :class="{disabled: loading}" @click="register = false">Entrar...</div>
+                <button v-if="!register" :class="{disabled: loading}" @click="register = true">Registrar...</button>
+                <button v-if="register" :class="{disabled: loading}" @click="register = false">Entrar...</button>
                 <div class="space"></div>
-                <button type="submit" class="button highlight" v-if="!register && !loading" @click="submit()">Entrar</button>
-                <button type="submit" class="button highlight" v-if="register && !loading" @click="submit()">Registrar</button>
-                <button type="submit" class="button highlight button-loading" v-if="loading"><span>&#xf110;</span></button>
+                <button type="submit" class="button green" v-if="!register && !loading" @click="submit()">Entrar</button>
+                <button type="submit" class="button green" v-if="register && !loading" @click="submit()">Registrar</button>
+                <button type="submit" class="button green button-loading" v-if="loading"><span>&#xf110;</span></button>
             </div>
         </div>
     </div>
@@ -70,7 +70,7 @@
 
 <script>
 import Vue from 'vue'
-import { mapState, mapActions } from 'vuex'
+import { mapState } from 'vuex'
 export default {
     name: 'Login',
     data() {
@@ -100,7 +100,6 @@ export default {
             }
         },
         mutateQuant(id, delta) {
-            console.log(`mutateQuant(${id},${delta})`)
             if (this.quants[id] === undefined) {
                 if (delta === -1) return;
                 Vue.set(this.quants, id, delta);
@@ -124,7 +123,7 @@ export default {
         },
         submit() {
             let error = false;
-            if (this.username === "") {
+            if (this.username === "" || this.username.length <= 2 || this.username.length > 100) {
                 attention("username");
                 error = true;
             }
@@ -134,6 +133,14 @@ export default {
             }
             if (!this.register) {
                 if (error) return;
+                for (let i = 0; i < this.$store.state.backend.sobreviventes.length; i++) {
+                    if (this.$store.state.backend.sobreviventes[i].nome.toLocaleLowerCase() === this.username.toLocaleLowerCase()) {
+                        if (this.$store.state.backend.sobreviventes[i].infectado !== null) {
+                            alert("TODO: usuário infectado");
+                            return;
+                        }
+                    }
+                }
                 this.$store.dispatch('backend/login', {
                     "nome": this.username,
                     "senha": this.password,
@@ -160,8 +167,7 @@ export default {
                     "inventario": inventario,
                 });
             }
-        },
-        ...mapActions('backend', [])
+        }
     }
 }
 function attention(elem) {
@@ -214,9 +220,6 @@ function attention(elem) {
 }
 #input input {
     width: calc(100% - 1em - 3px);
-    height: 2em;
-    padding: 0 0.5em;
-    border: 1px solid gray;
 }
 #input p {
     vertical-align: bottom;
@@ -276,15 +279,6 @@ table {
 tr {
     height: 30px;
 }
-.button {
-    font-size: 1em;
-    border: 1px solid gray;
-    user-select: none;
-    cursor: pointer;
-    background-color: lightgray;
-    border-radius: 10px;
-    padding: 8px 15px;
-}
 .quant-button {
     font-size: 1.5em;
     width: 23px;
@@ -298,24 +292,15 @@ tr {
     justify-content: center;
     align-items: center;
 }
-.button.disabled, .quant-button.disabled {
+.quant-button.disabled {
     pointer-events: none;
     background-color: rgb(129, 129, 129);
 }
-.button:hover, .quant-button:hover {
+.quant-button:hover {
     background-color: rgb(180, 180, 180);
 }
-.button:active, .quant-button:active {
+.quant-button:active {
     background-color: rgb(164, 164, 164);
-}
-.button.highlight {
-    background-color: var(--theme-color-button);
-}
-.button.highlight:hover {
-    background-color: var(--theme-color-button-hover);
-}
-.button.highlight:active {
-    background-color: var(--theme-color-button-active);
 }
 .button-loading span {
     font-family: 'Font Awesome 6 Free';
@@ -341,6 +326,9 @@ tr {
     99.99999% { transform: rotate(315deg); }
     100% { transform: rotate(360deg); }
 }
+button.disabled {
+    background-color: rgb(129, 129, 129);
+}
 .space {
     flex-grow: 1;
 }
@@ -354,13 +342,5 @@ tr {
 #select-genero {
     width: 100%;
     height: 30px;
-}
-@keyframes attention {
-    0%   { box-shadow: 0 0 0px 0px red; }
-    50%  { box-shadow: 0 0 13px 4px red; }
-    100% { box-shadow: 0 0 0px 0px red; }
-}
-.attention {
-    animation: attention 1s ease;
 }
 </style>

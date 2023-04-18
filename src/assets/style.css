@@ -25,3 +25,46 @@ body {
 body.desktop input:focus-visible {
     outline: none;
 }
+input {
+    height: 2em;
+    padding: 0 0.5em;
+    border: 1px solid gray;
+}
+@keyframes attention {
+    0%   { box-shadow: 0 0 0px 0px red; }
+    50%  { box-shadow: 0 0 13px 4px red; }
+    100% { box-shadow: 0 0 0px 0px red; }
+}
+.attention {
+    animation: attention 1s ease;
+}
+.icon {
+    font-family: 'Font Awesome 6 Free';
+}
+button {
+    font-size: 1em;
+    border: 1px solid gray;
+    user-select: none;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 8px 15px;
+}
+button.disabled {
+    pointer-events: none;
+}
+button { background-color: rgb(211, 211, 211); }
+button.disabled { background-color: rgb(129, 129, 129); }
+button:hover { background-color: rgb(180, 180, 180); }
+button:active { background-color: rgb(164, 164, 164); }
+button.red { background-color: rgb(255, 110, 110); }
+button.red:hover { background-color: rgb(255, 149, 149); }
+button.red:active { background-color: rgb(255, 169, 169); }
+button.orange { background-color: rgb(255, 187, 104); }
+button.orange:hover { background-color: rgb(255, 197, 153); }
+button.orange:active { background-color: rgb(255, 218, 180); }
+button.green { background-color: rgb(84, 213, 72); }
+button.green:hover { background-color: rgb(128, 209, 121); }
+button.green:active { background-color: rgb(141, 225, 135); }
+button.blue { background-color: rgb(174, 174, 250); }
+button.blue:hover { background-color: rgb(198, 198, 255); }
+button.blue:active { background-color: rgb(221, 221, 255); }

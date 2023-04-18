@@ -11,8 +11,10 @@ urlpatterns = [
     path('sobrevivente/', views.sobrevivente, name='sobrevivente'),
     path('posicao/', views.posicao, name='posicao'),
     path('relato/<int:relatado>/', views.relato, name='relato'),
+    path('compra/<int:oferta>/', views.compra, name='compra'),
 
     path('sobreviventes/', views.sobreviventes, name='sobreviventes'),
     path('itens/', views.itens, name='itens'),
     path('relatos/', views.relatos, name='relatos'),
+    path('ofertas/', views.ofertas, name='ofertas'),
 ]

@@ -1,117 +1,211 @@
 <template>
-    <div class="home">
-        Teste de overflow vertical:<br>
-        Linha #1<br>
-        Linha #2<br>
-        Linha #3<br>
-        Linha #4<br>
-        Linha #5<br>
-        Linha #6<br>
-        Linha #7<br>
-        Linha #8<br>
-        Linha #9<br>
-        Linha #10<br>
-        Linha #11<br>
-        Linha #12<br>
-        Linha #13<br>
-        Linha #14<br>
-        Linha #15<br>
-        Linha #16<br>
-        Linha #17<br>
-        Linha #18<br>
-        Linha #19<br>
-        Linha #20<br>
-        Linha #21<br>
-        Linha #22<br>
-        Linha #23<br>
-        Linha #24<br>
-        Linha #25<br>
-        Linha #26<br>
-        Linha #27<br>
-        Linha #28<br>
-        Linha #29<br>
-        Linha #30<br>
-        Linha #31<br>
-        Linha #32<br>
-        Linha #33<br>
-        Linha #34<br>
-        Linha #35<br>
-        Linha #36<br>
-        Linha #37<br>
-        Linha #38<br>
-        Linha #39<br>
-        Linha #40<br>
-        Linha #41<br>
-        Linha #42<br>
-        Linha #43<br>
-        Linha #44<br>
-        Linha #45<br>
-        Linha #46<br>
-        Linha #47<br>
-        Linha #48<br>
-        Linha #49<br>
-        Linha #50<br>
-        Linha #51<br>
-        Linha #52<br>
-        Linha #53<br>
-        Linha #54<br>
-        Linha #55<br>
-        Linha #56<br>
-        Linha #57<br>
-        Linha #58<br>
-        Linha #59<br>
-        Linha #60<br>
-        Linha #61<br>
-        Linha #62<br>
-        Linha #63<br>
-        Linha #64<br>
-        Linha #65<br>
-        Linha #66<br>
-        Linha #67<br>
-        Linha #68<br>
-        Linha #69<br>
-        Linha #70<br>
-        Linha #71<br>
-        Linha #72<br>
-        Linha #73<br>
-        Linha #74<br>
-        Linha #75<br>
-        Linha #76<br>
-        Linha #77<br>
-        Linha #78<br>
-        Linha #79<br>
-        Linha #80<br>
-        Linha #81<br>
-        Linha #82<br>
-        Linha #83<br>
-        Linha #84<br>
-        Linha #85<br>
-        Linha #86<br>
-        Linha #87<br>
-        Linha #88<br>
-        Linha #89<br>
-        Linha #90<br>
-        Linha #91<br>
-        Linha #92<br>
-        Linha #93<br>
-        Linha #94<br>
-        Linha #95<br>
-        Linha #96<br>
-        Linha #97<br>
-        Linha #98<br>
-        Linha #99<br>
-        Linha #100<br>
+    <div id="home">
+        <div id="home-content">
+            <h2>{{ login.nome }}</h2>
+            <h6 v-if="login.sexo === 'M'">Sobrevivente, Homem</h6>
+            <h6 v-if="login.sexo === 'F'">Sobrevivente, Mulher</h6>
+            <div id="posicao">
+                <h4>Posição:</h4>
+                <div id="posicao-inputs">
+                    <div class="posicao-input">
+                        <span>Latitude:</span>
+                        <input v-model="latitude" id="latitude" type="text">
+                    </div>
+                    <div class="posicao-input-space"></div>
+                    <div class="posicao-input">
+                        <span>Longitude:</span>
+                        <input v-model="longitude" id="longitude" type="text">
+                    </div>
+                </div>
+                <button id="posicao-submit" class="button green" @click="savePosition()" tabindex="0"><span class="icon">&#xf0c7;</span> Salvar</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Pontos</th>
+                        <th>Quant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in login.inventario">
+                        <td>{{ item.nome }}</td>
+                        <td>{{ item.pontos }}</td>
+                        <td>{{ item.quant }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>&nbsp;</p>
+            <p>Total de pontos: {{ login.inventario.map(x => x.pontos * x.quant).reduce((a,b) => a+b) }}</p>
+            <p>&nbsp;</p>
+            <div id="button-row">
+                <button id="signout" class="button red" @click="signout()" tabindex="0"><span class="icon">&#xf2ed;</span> Apagar Conta</button>
+                <div class="button-row-space"></div>
+                <button id="logoff" class="button orange" @click="logoff()" tabindex="0"><span class="icon">&#xf08b;</span> Sair</button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
+import { mapActions, mapState } from 'vuex'
 export default {
-    name: 'Home'
+    name: 'Home',
+    data() {
+        let posicao = this.$store.state.backend.login.posicao || {
+            latitude: "", 
+            longitude: "",
+        };
+        return {
+            latitude: String(posicao.latitude).replace('.', ','),
+            longitude: String(posicao.longitude).replace('.', ','),
+        };
+    },
+    computed: mapState({
+        login: state => state.backend.login,
+        itens: state => state.backend.itens,
+    }),
+    methods: {
+        savePosition() {
+            let error = false;
+            let latitude = validate_number(this.latitude, -90, 90);
+            let longitude = validate_number(this.longitude, -180, 180);
+            if (latitude === null) {
+                attention("latitude")
+                if (!error) {
+                    document.getElementById("latitude").focus();
+                    error = true;
+                }
+            }
+            if (longitude === null) {
+                attention("longitude")
+                if (!error) {
+                    document.getElementById("longitude").focus();
+                    error = true;
+                }
+            }
+            if (error) return;
+            this.postPosicao({
+                "latitude": latitude,
+                "longitude": longitude,
+            });
+        },
+        ...mapActions('backend', ['logoff', 'signout', 'postPosicao'])
+    }
+}
+function validate_number(text, min, max) {
+    text = text.trim();
+    let is_integer = /^\d+$/.test(text);
+    let is_fraction = /^\d+,\d+$/.test(text);
+    if (!is_integer && !is_fraction) {
+        return null;
+    }
+    if (is_fraction) {
+        text = text.replace(',', '.');
+    }
+    let number = Number(text);
+    if (number < min || number > max) {
+        return null;
+    }
+    return number;
+}
+function attention(elem) {
+    if (typeof elem === "string") {
+        elem = document.getElementById(elem);
+    }
+    elem.classList.remove('attention');
+    setTimeout(() => elem.classList.add('attention'), 1);
 }
 </script>
 
 <style scoped>
-.home {
+#home {
+    padding-top: 50px;
     text-align: center;
+}
+#home-content {
+    width: min(100% - 100px, 400px);
+    margin: 0 auto;
+}
+h6 {
+    color: gray;
+}
+#posicao {
+    margin: 50px 0;
+    border: 1px gray solid;
+    padding: 15px 20px 20px;
+    width: calc(100% - 40px);
+    display: flex;
+    align-items: end;
+    flex-direction: column;
+}
+#posicao input {
+    flex-shrink: 1;
+}
+#posicao h4 {
+    text-align: left;
+    margin-bottom: 10px;
+    width: 100%;
+}
+#button-row {
+    display: flex;
+    flex-direction: row;
+}
+#signout, #logoff {
+    min-width: 150px;
+}
+.button-row-space {
+    flex-grow: 1;
+}
+#posicao-inputs {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20px;
+    width: 100%;
+}
+#posicao-inputs input {
+    max-width: 150px;
+}
+.posicao-input-space {
+    flex-grow: 1;
+    min-width: 1em;
+}
+.posicao-input {
+    display: flex;
+    flex-direction: column;
+}
+#posicao-input span {
+    text-align: left;
+}
+table {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    border-collapse: collapse;
+}
+thead th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ccc;
+}
+tbody tr {
+    background-color: #ffffff;
+}
+tbody td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+tbody td:first-child {
+    font-weight: bold;
+    text-align: left;
+}
+tbody td:nth-child(even) {
+    background-color: #f9f9f9;
+}
+tbody td:nth-child(odd) {
+    background-color: #ffffff;
 }
 </style>

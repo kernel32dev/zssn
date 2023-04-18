@@ -5,7 +5,7 @@ import Cookies from 'js-cookie'
 // esse objecto tem um campo booleano chamado "ok"
 // se o request tiver sucesso, o campo ok conterá um objeto com a resposta do servidor e "err" não estara definido
 // se o request falhar, o campo err conterá o erro, informações adicionais serão encontradas no própio objeto (como status) e "ok" não estará definido
-// portanto você pode verificar se deu certo ou não apenas usando if (result.ok) ou if (result.err)
+// portanto você pode verificar se deu certo ou não apenas usando if (!result.err) ou if (result.err)
 function handle_errors(promise) {
     return new Promise(resolve => {
         promise.then(response => {
@@ -23,6 +23,8 @@ function handle_errors(promise) {
                     resolve({err: "forbidden", status})
                 } else if (status === 404) {
                     resolve({err: "not found", status})
+                } else if (status === 409) {
+                    resolve({err: "conflict", status})
                 } else {
                     resolve({err: "bad status", status})
                 }

@@ -37,7 +37,7 @@ class ItemComercial(models.Model):
 
 # relatos de sobreviventes de que um outro sobrevivente esta infectado
 class Relato(models.Model):
-    relator = models.ForeignKey(Sobrevivente, name='relator', related_name='relator', on_delete=models.CASCADE)
+    relator = models.ForeignKey(Sobrevivente, name='relator', null=True, related_name='relator', on_delete=models.SET_NULL)
     relatado = models.ForeignKey(Sobrevivente, name='relatado', related_name='relatado', on_delete=models.CASCADE)
     data = models.DateTimeField(name='data', auto_now_add=True)
     class Meta:
@@ -69,3 +69,15 @@ class Sessao(models.Model):
     validade = models.DateTimeField(name='validade')
     def __str__(self):
         return f"Sessao(usuario = {self.usuario}, validade = {self.validade})"
+
+class Oferta(models.Model):
+    vendedor = models.ForeignKey(Sobrevivente, name='vendedor', on_delete=models.CASCADE)
+    def __str__(self):
+        return f"Oferta(vendedor = {self.vendedor})"
+
+class OfertaItem(models.Model):
+    oferta = models.ForeignKey(Oferta, name='oferta', on_delete=models.CASCADE)
+    item = models.ForeignKey(ItemComercial, name='item', on_delete=models.CASCADE)
+    quant = models.IntegerField(name='quant')
+    def __str__(self):
+        return f"OfertaItem(oferta = {self.oferta}, item = {self.item}, quant = {self.quant})"

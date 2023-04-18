@@ -8,9 +8,10 @@ import uuid
 from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest, Http404
 from django.conf import settings
-from django.core.exceptions import PermissionDenied, BadRequest
+from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotExist
 from schema import Schema, And, Or, Use, SchemaError
-from .models import Sobrevivente, ItemComercial, Relato, Inventario, Sessao
+from .models import Sobrevivente, ItemComercial, Relato, Inventario, Sessao, Oferta, OfertaItem
+from django.middleware import csrf
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
@@ -18,7 +19,7 @@ class DecimalEncoder(json.JSONEncoder):
             return float(o)
         return super(DecimalEncoder, self).default(o)
 
-SESSION_COOKIE_NAME = "sessionid"
+SESSION_COOKIE_NAME = "sessionidx"
 DEBUG = settings.DEBUG
 
 ident = 4 if DEBUG else None
@@ -51,12 +52,12 @@ POST: {
 def login(request: HttpRequest):
     try:
         login_schema = Schema({
-            "nome": And(Use(str), lambda x: 4 < len(x) < 100),
+            "nome": And(Use(str), lambda x: 2 < len(x) < 100),
             "senha": Use(str),
         })
         body = login_schema.validate(json.loads(request.body))
         if request.method == "POST":
-            sobrevivente = Sobrevivente.objects.get(nome=body["nome"], infectado=None)
+            sobrevivente = Sobrevivente.objects.get(nome__iexact=body["nome"], infectado=None)
             hasher = hashlib.sha256()
             hasher.update(body["senha"].encode())
             hasher.update(sobrevivente.sal.encode())
@@ -157,6 +158,8 @@ def signup(request: HttpRequest):
                 }]
             })
             body = sobrevivente_schema.validate(json.loads(request.body))
+            if Sobrevivente.objects.filter(nome__iexact = body["nome"]).exists():
+                raise PermissionDenied()
             sal = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
             hasher = hashlib.sha256()
             hasher.update(body["senha"].encode())
@@ -247,6 +250,7 @@ GET: retorna todas as informações deste sobrevivente
 """
 def sobrevivente(request: HttpRequest):
     try:
+        csrf.get_token(request)
         sobrevivente = autenticar_usuario(request)
         if request.method == "GET":
             result = sobrevivente_para_dict(sobrevivente, True)
@@ -271,10 +275,11 @@ def posicao(request: HttpRequest):
             "latitude": And(Use(float), lambda x: -90 < x < 90),
             "longitude": And(Use(float), lambda x: -180 < x < 180),
         })
+        body = posicao_schema.validate(json.loads(request.body))
         sobrevivente = autenticar_usuario(request)
         if request.method == "POST":
-            sobrevivente.latitude = posicao_schema["latitude"]
-            sobrevivente.longitude = posicao_schema["longitude"]
+            sobrevivente.latitude = body["latitude"]
+            sobrevivente.longitude = body["longitude"]
             sobrevivente.save()
         else:
             raise Http404()
@@ -292,15 +297,123 @@ DELETE: apaga um relato
 """
 def relato(request: HttpRequest, **kwargs):
     try:
-        relator = autenticar_usuario(request).id
+        relator = autenticar_usuario(request)
         relatado = kwargs.get('relatado')
         if relatado == None:
             raise BadRequest()
+        relatado = Sobrevivente.objects.get(id=relatado)
         if request.method == "POST":
-            if Relato.objects.filter(relator = relator, relatado = relatado).count() == 0:
+            infectado = None
+            if not Relato.objects.filter(relator = relator, relatado = relatado).exists():
                 Relato(relator = relator, relatado = relatado).save()
+                Sessao.objects.filter(usuario=relatado).delete()
+            count = Relato.objects.filter(relatado = relatado).count()
+            if count >= 3:
+                infectado = datetime.datetime.now()
+                relatado.infectado = infectado
+                relatado.save()
+                infectado = infectado.isoformat()
+            result = { "infectado": infectado }
+            return HttpResponse(json.dumps(result, indent=ident, cls=DecimalEncoder))
         elif request.method == "DELETE":
             Relato.objects.filter(relator = relator, relatado = relatado).delete()
+            return HttpResponse("")
+        else:
+            raise Http404()
+    except Exception as error:
+        if DEBUG: raise
+        print(repr(error))
+        raise Http404()
+
+"""
+POST: compra uma oferta
+"""
+def compra(request: HttpRequest, **kwargs):
+    try:
+        comprador = autenticar_usuario(request)
+        oferta = kwargs.get('oferta')
+        if oferta == None:
+            raise BadRequest()
+        if request.method == "POST":
+            oferta = Oferta.objects.get(id=oferta)
+            oferta_itens = OfertaItem.objects.filter(oferta=oferta)
+            vendedor = oferta.vendedor
+            for oferta_item in oferta_itens:
+                try:
+                    vendedor_quant = Inventario.objects.get(dono=vendedor, item=oferta_item.item).quant
+                except ObjectDoesNotExist:
+                    vendedor_quant = 0
+                try:
+                    comprador_quant = Inventario.objects.get(dono=comprador, item=oferta_item.item).quant
+                except ObjectDoesNotExist:
+                    comprador_quant = 0
+                if vendedor_quant < -oferta_item.quant:
+                    # vendedor não tem o suficiente para dar para o comprador
+                    raise BadRequest(f"{vendedor_quant} <- AAA -> {oferta_item.quant}")
+                if comprador_quant < oferta_item.quant:
+                    # comprador não tem o suficiente para pagar para o vendedor
+                    raise BadRequest(f"{comprador_quant} <- BBB -> {oferta_item.quant}")
+            for oferta_item in oferta_itens:
+                try:
+                    vendedor_inventario = Inventario.objects.get(dono=vendedor, item=oferta_item.item)
+                    vendedor_inventario.quant -= oferta_item.quant
+                except ObjectDoesNotExist:
+                    vendedor_inventario = Inventario(dono=vendedor, item=oferta_item.item, quant=-oferta_item.quant)
+                vendedor_inventario.save()
+                try:
+                    comprador_inventario = Inventario.objects.get(dono=comprador, item=oferta_item.item)
+                    comprador_inventario.quant += oferta_item.quant
+                except ObjectDoesNotExist:
+                    comprador_inventario = Inventario(dono=comprador, item=oferta_item.item, quant=oferta_item.quant)
+                comprador_inventario.save()
+            oferta.delete()
+        else:
+            raise Http404()
+        return HttpResponse("")
+    except Exception as error:
+        if DEBUG: raise
+        print(repr(error))
+        raise Http404()
+
+"""
+POST: cria uma nova oferta
+{
+    "itens": [{
+        "id": Number,
+        "quant": Number,
+    }],
+} -> {
+    "id": Number,
+}
+DELETE: apaga uma oferta
+"""
+def oferta(request: HttpRequest, **kwargs):
+    try:
+        vendedor = autenticar_usuario(request)
+        oferta = kwargs.get('oferta')
+        if request.method == "POST" and oferta != None:
+            oferta_schema = Schema({
+                "itens": [{
+                    "id": And(Use(int), lambda x: x > 0),
+                    "quant": And(Use(int), lambda x: x != 0),
+                }],
+            })
+            body = oferta_schema.validate(json.loads(request.body))
+            oferta = Oferta(vendedor=vendedor)
+            oferta.save()
+            try:
+                for item in body["itens"]:
+                    OfertaItem(oferta=oferta, item=ItemComercial.get(id=item["id"]), quant=item["quant"]).save()
+            except Exception:
+                oferta.delete()
+                raise
+            result = {
+                "id": oferta.id
+            }
+            return HttpResponse(json.dumps(result, indent=ident, cls=DecimalEncoder))
+        elif request.method == "DELETE" and oferta == None:
+            Oferta.objects.get(id=oferta).delete()
+            return HttpResponse("")
         else:
             raise Http404()
     except Exception as error:
@@ -388,11 +501,55 @@ GET: retorna todos os relatos
 def relatos(request: HttpRequest):
     try:
         if request.method == "GET":
-            itens = []
-            for relato in Relato.objects.all().order_by('relator', 'relatado'):
-                itens.append([relato.relator.id, relato.relatado.id])
+            relatos = []
+            for relato in Relato.objects.all().order_by('id'):
+                relatos.append([relato.relator.id, relato.relatado.id])
             result = {
-                "itens": itens
+                "relatos": relatos
+            }
+        else:
+            raise Http404()
+        return HttpResponse(json.dumps(result, indent=ident, cls=DecimalEncoder))
+    except Exception as error:
+        if DEBUG: raise
+        print(repr(error))
+        raise Http404()
+
+"""
+GET: retorna todas as ofertas
+{
+    "ofertas": [{
+        "id": Number,
+        "vendedor": Number,
+        "itens": [{
+            "id": Number,
+            "quant": Number,
+        }],
+    }]
+}
+"""
+def ofertas(request: HttpRequest):
+    try:
+        if request.method == "GET":
+            ofertas = []
+            for oferta_item in OfertaItem.objects.all():
+                index = next((i for i, x in enumerate(ofertas) if x["vendedor"] == oferta_item.oferta.vendedor.id), None)
+                if index == None:
+                    ofertas.append({
+                        "id": oferta_item.oferta.id,
+                        "vendedor": oferta_item.oferta.vendedor.id,
+                        "itens": [{
+                            "id": oferta_item.item.id,
+                            "quant": oferta_item.quant,
+                        }],
+                    })
+                else:
+                    ofertas[index]["itens"].append({
+                        "id": oferta_item.item.id,
+                        "quant": oferta_item.quant,
+                    })
+            result = {
+                "ofertas": ofertas
             }
         else:
             raise Http404()
@@ -414,6 +571,10 @@ def sobrevivente_para_dict(sobrevivente: Sobrevivente, inclui_inventario: bool):
             }
         else:
             posicao = None
+        if sobrevivente.infectado != None:
+            infectado = sobrevivente.infectado.isoformat()
+        else:
+            infectado = None
         if inclui_inventario:
             inventario = []
             for inventario_item in Inventario.objects.filter(dono=sobrevivente.id):
@@ -428,7 +589,7 @@ def sobrevivente_para_dict(sobrevivente: Sobrevivente, inclui_inventario: bool):
                 "nome": sobrevivente.nome,
                 "sexo": sobrevivente.sexo,
                 "posicao": posicao,
-                "infectado": sobrevivente.infectado,
+                "infectado": infectado,
                 "inventario": inventario,
             }
         else:
@@ -437,7 +598,7 @@ def sobrevivente_para_dict(sobrevivente: Sobrevivente, inclui_inventario: bool):
                 "nome": sobrevivente.nome,
                 "sexo": sobrevivente.sexo,
                 "posicao": posicao,
-                "infectado": sobrevivente.infectado,
+                "infectado": infectado,
             }
 
 """
@@ -460,9 +621,12 @@ def autenticar_sessao(request: HttpRequest):
     except Exception:
         raise BadRequest()
     try:
-        return Sessao.objects.get(id=id)
+        sessao =  Sessao.objects.get(id=id)
     except Exception:
         raise PermissionDenied()
+    if sessao.usuario.infectado != None:
+        raise PermissionDenied()
+    return sessao
 
 def set_cookie(response: HttpResponse, key: str, value: str, days_expire=7):
     if days_expire is None:

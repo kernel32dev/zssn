@@ -1,10 +1,10 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from '@/components/Home.vue'
-import Sobreviventes from '@/components/Sobreviventes.vue'
-import Inventario from '@/components/Inventario.vue'
-import Escambo from '@/components/Escambo.vue'
+import Comprar from '@/components/Comprar.vue'
+import Vender from '@/components/Vender.vue'
 import Relatos from '@/components/Relatos.vue'
+import Relatorios from '@/components/Relatorios.vue'
 
 Vue.use(Router)
 
@@ -13,27 +13,32 @@ export default new Router({
         {
             path: '/',
             name: 'home',
+            meta: { alias: 'Meu Perfil' },
             component: Home
         },
         {
-            path: '/sobreviventes',
-            name: 'sobreviventes',
-            component: Sobreviventes
+            path: '/comprar',
+            name: 'comprar',
+            meta: { alias: 'Comprar' },
+            component: Comprar
         },
         {
-            path: '/inventario',
-            name: 'inventario',
-            component: Inventario
-        },
-        {
-            path: '/escambo',
-            name: 'escambo',
-            component: Escambo
+            path: '/vender',
+            name: 'vender',
+            meta: { alias: 'Vender' },
+            component: Vender
         },
         {
             path: '/relatos',
             name: 'relatos',
+            meta: { alias: 'Relatos' },
             component: Relatos
+        },
+        {
+            path: '/relatorios',
+            name: 'relatorios',
+            meta: { alias: 'Relatórios' },
+            component: Relatorios
         }
     ]
 })

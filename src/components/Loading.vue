@@ -1,12 +1,10 @@
 <template>
-    <div class="escambo">
+    <div id="loading">
     </div>
 </template>
 
 <script>
 export default {
-    name: 'Escambo'
+    name: 'Loading'
 }
 </script>
-
-<style scoped></style>
