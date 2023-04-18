@@ -5,7 +5,6 @@ import datetime
 import string
 import random
 import uuid
-from django.shortcuts import render
 from django.http import HttpResponse, HttpRequest, Http404
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotExist
